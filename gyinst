@@ -23,21 +23,38 @@ else
 fi
 
 if [ ! -e /data/data/com.termux/files -o -r / ];then
-    if [ $EUID -ne 0 ]; then
-        exec sudo $0 $target
-    fi
     R=
-else
+	if [ ! -e '/bin/env' ]; then
+		sudo ln -sf /usr/bin/env /bin
+	fi
+else # termux
     R="/data/data/com.termux/files/usr"
+	if [ ! -e /data/data/com.termux/files/usr/usr ];then
+		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/usr
+    fi
+    if [ ! -L /data/data/com.termux/files/usr/home ];then
+		cp -a /data/data/com.termux/files/usr/home/* /data/data/com.termux/files/home
+		rm -rf /data/data/com.termux/files/usr/home
+		ln -sf /data/data/com.termux/files/home /data/data/com.termux/files/usr/home
+    fi
+    if [ ! -e /data/data/com.termux/files/usr/local ];then
+		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/local
+	fi
+	if [ ! -e /data/data/com.termux/files/usr/bin/sudo ];then
+		cat - > /data/data/com.termux/files/usr/bin/sudo <<END
+#!/bin/env bash
+exec $@
+END
+        chmod +x /data/data/com.termux/files/usr/bin/sudo
+    fi
 fi
-
 
 
 function user_do() {
     if [ -n "$SUDO_USER" ]; then
-        sudo -u $SUDO_USER $1 $@
+        sudo -u $SUDO_USER $@
     else
-        $1 $@
+        $@
     fi
 }
 

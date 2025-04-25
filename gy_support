@@ -9,11 +9,16 @@ if [ ! -e /data/data/com.termux/files -o -r / ];then
 	fi
 else # termux
     R="/data/data/com.termux/files/usr"
-	if [ ! -e "/data/data/com.termux/files/usr/usr" ];then
+	if [ ! -e /data/data/com.termux/files/usr/usr ];then
 		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/usr
+    fi
+    if [ ! -L /data/data/com.termux/files/usr/home ];then
 		cp -a /data/data/com.termux/files/usr/home/* /data/data/com.termux/files/home
 		rm -rf /data/data/com.termux/files/usr/home
 		ln -sf /data/data/com.termux/files/home /data/data/com.termux/files/usr/home
+    fi
+    if [ ! -e /data/data/com.termux/files/usr/local ];then
+		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/local
 	fi
 	if [ ! -e /data/data/com.termux/files/usr/bin/sudo ];then
 		cat - > /data/data/com.termux/files/usr/bin/sudo <<END
