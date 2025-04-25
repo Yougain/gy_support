@@ -1,0 +1,17 @@
+#!/bin/env bash
+
+cd $(dirname $0)
+
+. ./gy_support
+
+sudo $IST -y update
+if [ "$IST" = "apt-get" ];then
+	sudo DEBIAN_FRONTEND=noninteractive $IST -y upgrade -yq
+else
+	sudo $IST -y upgrade
+fi
+
+$IST -y install sudo git
+
+install gyinst gy_support
+

@@ -1,0 +1,81 @@
+# bash source
+
+cd $(dirname $0)
+
+if [ ! -e /data/data/com.termux/files -o -r / ];then
+    R=
+	if [ ! -e '/bin/env' ]; then
+		sudo ln -sf /usr/bin/env /bin
+	fi
+else # termux
+    R="/data/data/com.termux/files/usr"
+	if [ ! -e "/data/data/com.termux/files/usr/usr" ];then
+		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/usr
+		cp -a /data/data/com.termux/files/usr/home/* /data/data/com.termux/files/home
+		rm -rf /data/data/com.termux/files/usr/home
+		ln -sf /data/data/com.termux/files/home /data/data/com.termux/files/usr/home
+	fi
+	if [ ! -e /data/data/com.termux/files/usr/bin/sudo ];then
+		cat - > /data/data/com.termux/files/usr/bin/sudo <<END
+#!/bin/env bash
+exec $@
+END
+        chmod +x /data/data/com.termux/files/usr/bin/sudo
+    fi
+fi
+
+if [ -z "$R" ]; then
+	if [ -f /bin/dnf -o -f /usr/bin/dnf ];then
+		IST="dnf"
+		DVP="devel"
+		APKG="$APKG_R"
+	else
+		if [ -f /bin/yum -o -f /usr/bin/yum ];then
+			IST="yum"
+			DVP="devel"
+			APKG="$APKG_R"
+		else
+			if [ -f /usr/apt-get -o -f /usr/bin/apt-get ];then
+				IST="apt-get"
+				DVP="dev"
+			else
+				echo "Error: package installer not found."
+				exit 1
+			fi
+		fi
+	fi
+else
+	IST="pkg"
+	DVP="dev"
+	APKG=""
+fi
+
+
+if [ -n "$GYINST" ]; then
+    function install(){
+        last="${!#}"
+        if [[ "$last" == *"/"* ]]; then
+            set -- "${@:1:$(($#-1))}"
+            target=$R$last
+        else
+            target=$R/usr/local/bin
+        fi
+        for f in "$@"; do
+            sudo rm -rf "$target/$f"
+            sudo ln -sf "/var/lib/git_project/${PWD##*/}/$f" "$target/$f"
+        done
+    }
+else
+    function install(){
+        last="${!#}"
+        if [[ "$last" == *"/"* ]]; then
+            set -- "${@:1:$(($#-1))}"
+            sudo mkdir -p $R$last
+            sudo cp -rvf --preserve=timestamp "$@" $R$last
+        else
+            sudo $R/usr/bin/install -pv "$@" $R/usr/local/bin
+        fi
+
+    }
+fi
+
