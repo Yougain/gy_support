@@ -35,9 +35,9 @@ fi
 
 function user_do() {
     if [ -n "$SUDO_USER" ]; then
-        sudo -u $SUDO_USER $0 $@
+        sudo -u $SUDO_USER $1 $@
     else
-        $0 $@
+        $1 $@
     fi
 }
 
