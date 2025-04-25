@@ -11,7 +11,7 @@ else
 	sudo $IST -y upgrade
 fi
 
-$IST -y install sudo git
+$IST install -y sudo git
 
 install gyinst gy_support
 
