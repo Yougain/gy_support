@@ -67,7 +67,7 @@ if [ -n "$GYINST" ]; then
         fi
         for f in "$@"; do
             sudo rm -rf "$target/$f"
-            sudo ln -sf "/var/lib/git_project/${PWD##*/}/$f" "$target/$f"
+            sudo ln -sf "$R/var/lib/git_project/${PWD##*/}/$f" "$target/$f"
         done
     }
 else
