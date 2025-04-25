@@ -4,11 +4,11 @@ cd $(dirname $0)
 
 . ./gy_support
 
-sudo $IST -y update
+sudo $IST update -y
 if [ "$IST" = "apt-get" ];then
 	sudo DEBIAN_FRONTEND=noninteractive $IST -y upgrade -yq
 else
-	sudo $IST -y upgrade
+	sudo $IST upgrade -y
 fi
 
 $IST install -y sudo git
