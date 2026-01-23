@@ -7,6 +7,11 @@ if [ "$1" == "--move-only" ]; then
     shift
 fi
 
+if [ "$1" == "-e" ]; then
+    UNINSTALL=1
+    shift
+fi
+
 if [ $# -eq 0 ]; then
     if [ -e .git ]; then
         target=$(basename $PWD)

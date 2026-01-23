@@ -1,5 +1,7 @@
 # bash source
 
+GYINST=1
+
 cd $(dirname $0)
 
 if [ ! -e /data/data/com.termux/files -o -r / ];then
