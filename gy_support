@@ -34,7 +34,7 @@ fi
 if [ ! -e /data/data/com.termux/files -o -r / ];then
     R=
 	if [ ! -e '/bin/env' ]; then
-		ln -sf /usr/bin/env /bin
+		sudo ln -sf /usr/bin/env /bin
 	fi
 else # termux
     R="/data/data/com.termux/files/usr"
@@ -49,8 +49,8 @@ else # termux
     if [ ! -e /data/data/com.termux/files/usr/local ];then
 		ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/local
 	fi
-	if [ ! -e /data/data/com.termux/files/usr/bin/];then
-		cat - > /data/data/com.termux/files/usr/bin/<<END
+	if [ ! -e /data/data/com.termux/files/usr/bin/sudo ];then
+		cat - > /data/data/com.termux/files/usr/bin/sudo <<END
 #!/bin/env bash
 exec $@
 END
