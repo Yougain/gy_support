@@ -114,12 +114,11 @@ else
         last="${!#}"
         if [[ "$last" == *"/"* ]]; then
             set -- "${@:1:$(($#-1))}"
-             set -- "${@:1:$(($#-1))}"
             sudo mkdir -p $R$last
             sudo cp -rvf --preserve=timestamp "$@" $R$last
+         else
             mkdir -p $R$last
             cp -rvf --preserve=timestamp "$@" $R$last
-         else
             sudo $R/usr/bin/install -pv "$@" $R/usr/local/bin
             $R/usr/bin/install -pv "$@" $R/usr/local/bin
         fi
