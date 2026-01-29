@@ -95,9 +95,6 @@ if [ -n "$GYINST" ]; then
             target=$R/usr/local/bin
         fi
         for f in "$@"; do
-            sudo rm -rf "$target/$f"
-            sudo mkdir -p $target
-            sudo ln -sf "$R/var/lib/git_project/${PWD##*/}/$f" "$target/$f"
 			if [ -z "$DO_UNINST" ]; then
 				echo "Installing $target/$f ..."
 	            rm -rf "$target/$f"
@@ -114,12 +111,9 @@ else
         last="${!#}"
         if [[ "$last" == *"/"* ]]; then
             set -- "${@:1:$(($#-1))}"
-            sudo mkdir -p $R$last
-            sudo cp -rvf --preserve=timestamp "$@" $R$last
-        else
             mkdir -p $R$last
             cp -rvf --preserve=timestamp "$@" $R$last
-            sudo $R/usr/bin/install -pv "$@" $R/usr/local/bin
+        else
             $R/usr/bin/install -pv "$@" $R/usr/local/bin
         fi
 
