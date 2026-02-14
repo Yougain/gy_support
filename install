@@ -2,16 +2,34 @@
 
 cd $(dirname $0)
 
-. ./gy_support
 
-sudo $IST update -y
-if [ "$IST" = "apt-get" ];then
-	sudo DEBIAN_FRONTEND=noninteractive $IST -y upgrade -yq
-else
-	sudo $IST upgrade -y
-fi
+. ./gy_install $0
 
-sudo $IST install -y sudo git
+#sudo $IST update -y
+#if [ "$IST" = "apt-get" ];then
+#	sudo DEBIAN_FRONTEND=noninteractive $IST -y upgrade -yq
+#else
+#	sudo $IST upgrade -y
+#fi
 
-install gyinst gy_support
+#sudo $IST install -y sudo git
+
+install gy_install
+ln -s gy_install gy_uninstall
+
+install_lines .zshrc .bashrc <<END
+    for i in /etc/shrc.d/*.sh; do
+        if [ "\$i" = "/etc/shrc.d/*.sh" ]; then
+            break
+        fi
+        if [ -r "\$i" ]; then
+            . "\$i"
+        fi
+    done
+    unset i
+END
+
+
+install %wsl.sh %local_path.sh /etc/shrc.d
+
 
