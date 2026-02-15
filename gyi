@@ -1,0 +1,20 @@
+
+if [ -z "$NO_GYI" ]; then
+	set -e
+	if [  -z "`which gy_install`" ]; then
+		mkdir -p ~/.tmp/downloads
+		git clone https://github.com/Yougain/gy_support.git ~/.tmp/downloads/gy_support
+		rm -rf ~/.tmp/downloads/gy_support
+		ln -sf /home/yougain/git_project/gy_support ~/.tmp/downloads/gy_support
+		~/.tmp/downloads/gy_support/install
+		echo "CAUTION: ~/.bashrc or ~/.zshrc has been modified. Please re-run this script after installation."
+		NO_GYI=1 . ~/.tmp/downloads/gy_support/gy_install
+	else
+		echo gy_install "$(readlink -f "$0")"
+		exec gy_install "$(readlink -f "$0")"
+	fi
+
+fi
+
+
+
