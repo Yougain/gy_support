@@ -1,0 +1,749 @@
+#!/bin/bash
+
+
+. bashlib_y
+
+set -e
+dbv $REENTER
+
+if [ -z "$REENTER" -o -n "$PROCESS_DEPENDENCIES" ]; then
+	dbv $REENTER
+	REENTER=1
+# ----------termux support start----------
+dbv
+if [ ! -e /data/data/com.termux/files -o -r / ];then
+    R=
+	if [ ! -e '/bin/env' ]; then
+		sudo /bin/ln -sf /usr/bin/env /bin
+	fi
+else # termux
+    R="/data/data/com.termux/files/usr"
+	if [ ! -e /data/data/com.termux/files/usr/usr ];then
+		/bin/ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/usr
+    fi
+    if [ ! -L /data/data/com.termux/files/usr/home ];then
+		cp -a /data/data/com.termux/files/usr/home/* /data/data/com.termux/files/home
+		rm -rf /data/data/com.termux/files/usr/home
+		/bin/ln -sf /data/data/com.termux/files/home /data/data/com.termux/files/usr/home
+    fi
+    if [ ! -e /data/data/com.termux/files/usr/local ];then
+		/bin/ln -sf /data/data/com.termux/files/usr /data/data/com.termux/files/usr/local
+	fi
+	if [ ! -e /data/data/com.termux/files/usr/bin/sudo ];then
+		cat - > /data/data/com.termux/files/usr/bin/sudo <<END
+#!/bin/env bash
+exec $@
+END
+        chmod +x /data/data/com.termux/files/usr/bin/sudo
+    fi
+fi
+
+if [ -z "$R" ]; then
+	if [ -f /bin/dnf -o -f /usr/bin/dnf ];then
+		IST="dnf"
+		DVP="devel"
+		APKG="$APKG_R"
+	else
+		if [ -f /bin/yum -o -f /usr/bin/yum ];then
+			IST="yum"
+			DVP="devel"
+			APKG="$APKG_R"
+		else
+			if [ -f /usr/apt-get -o -f /usr/bin/apt-get ];then
+				IST="apt-get"
+				DVP="dev"
+			else
+				echo "Error: package installer not found."
+				exit 1
+			fi
+		fi
+	fi
+else
+	IST="pkg"
+	DVP="dev"
+	APKG=""
+fi
+dbv
+
+if [ -n "$external_install" ]; then
+	exit 0
+fi
+
+# ----------termux support end----------
+dbv
+
+uninstall(){ # uninstall PACKAGE_NAME
+	for d in "$R/local" "$HOME/.local" "/usr/local"; do
+		uninstaller="$d/var/lib/gy_support/installed/packages/$1/uninstall"
+		if [ -e "$uninstaller" ]; then
+			if [ "$d" = "/usr/local" ]; then
+				FOR_ALL_USER=Yes sudo "$uninstaller"
+			else
+				FOR_ALL_USER=No "$uninstaller"
+			fi
+			return 0
+		fi
+	done
+	return 1
+}
+
+
+
+case "$(basename $0)" in
+	gy_install)
+		if [ $# -eq 0 ]; then
+			if [ -e ./install ]; then
+				exec ./install
+			else
+				echo "FATAL: install script not found." >&2
+				exit 1
+			fi
+		else
+			for i in "$@"; do
+				if [ -e ~/git_project/$i ]; then
+					~/git_project/$i/install
+				else
+					mkdir -p .tmp/downloads
+					git clone https://github.com/Yougain/$i.git .tmp/downloads
+					./tmp/downloads/$i/install
+				fi
+			done
+		fi
+		exit
+		;;
+	gy_uninstall)
+		if [ $# -eq 0 ]; then
+			if [ -e ./install ]; then
+				uninstall ${PWD##*/}
+			else
+				echo "FATAL: uninstall script not found." >&2
+				exit 1
+			fi
+		else
+			for i in "$@"; do
+				uninstall "$i"
+			done
+		fi
+		exit
+		;;
+esac
+
+
+if [ -n "$1" ]; then
+	dbv
+	relevant="$(readlink -f "$1")"
+else
+	dbv
+	relevant="$(readlink -f "$0")"
+fi
+
+dbv $relevant
+dbv $0 $*
+
+cd "$(dirname "$relevant")"
+
+
+case "$(basename "$relevant")" in
+	install)
+		INS_OP=install
+		;;
+	gy_install)
+		INS_OP=install
+		;;
+	uninstall)
+		INS_OP=uninstall
+		;;
+	gy_uninstall)
+		INS_OP=uninstall
+		;;
+	*)
+		echo "FATAL: This script must be run as install or uninstall." >&2
+		exit 1
+		;;
+esac
+
+
+if [ "$INS_OP" = "uninstall" -a  -z "$FOR_ALL_USER" ];then
+	for f in "${@:2}"; do
+		if ! uninstall "$f"; then
+			echo "ERROR: Package, $f is not installed." >&2		
+			failed=1
+		fi
+	done
+	if [ -n "$failed" ]; then
+		exit 1
+	else
+		exit 0
+	fi
+fi
+
+
+if [ "$INS_OP" = "install" ]; then
+
+	__gy_select_installation(){
+		echo -n "For local user or all users? Please select [1) local user, 2) all users]: "
+		read ans
+		if [ "$ans" = "1" ]; then
+			export FOR_ALL_USER=No
+		elif [ "$ans" = "2" ]; then
+			export FOR_ALL_USER=Yes
+		else
+			echo "Invalid selection. Aborting."
+			exit 1
+		fi
+	}
+
+	if [ -z "$R" -a -z "$FOR_ALL_USER" ]; then
+		if [ -e /usr/local/bin/gy_install ]; then
+			if [ -e ~/.local/bin/gy_install ]; then
+				__gy_select_installation
+			else
+				export FOR_ALL_USER=Yes
+			fi
+		else
+			if [ -e ~/.local/bin/gy_install ]; then
+				export FOR_ALL_USER=No
+			else
+				__gy_select_installation
+			fi
+		fi
+	fi
+
+	if [ "$FOR_ALL_USER" = "Yes" ] && [ "$(id -u)" -ne 0 ]; then
+		exec sudo bash -c "PATH=/usr/local/bin:\$PATH ./$INS_OP"
+	fi
+
+fi
+
+if [ -z "$R" ]; then
+	if [ "$FOR_ALL_USER" = "Yes" ]; then
+		P="/usr/local"
+	else
+		P="$HOME/.local"
+	fi
+else
+	P="$R/local"
+fi
+
+if [ -d "$P/var/lib/git_project" ]; then
+	export GYINST=1
+else
+	export GYINST=
+fi
+
+
+
+pkg_name="${PWD##*/}"
+installed_item="$P/var/lib/gy_support/installed"
+pkg_dir="$installed_item/packages/$pkg_name"
+file_dir="$installed_item/files"
+mkdir -p "$pkg_dir"
+mkdir -p "$file_dir"
+
+	dbv "$pkg_dir"
+	dbv $INS_OP
+
+if [ "$INS_OP" = "uninstall" ]; then
+	dbv
+	if [ -z "$FOR_ALL_USER" ]; then
+		dbv
+		dbv uninstall "${PWD##*/}"
+		uninstall "${PWD##*/}"
+		exit $?
+	else
+		dbv $FOR_ALL_USER
+		dependencies="$(ls -A "$pkg_dir/.__dependeded_by__" 2>/dev/null || echo -n)"
+		dbv $dependencies
+		if [ -n "$dependencies" ]; then
+			dbv
+			echo "FATAL: Package has dependencies, [$dependencies] installed. Please uninstall them first." >&2
+			exit 1
+		fi
+		dbv
+	fi
+else
+	if [ -n "$GYINST" ]; then
+		gdir="$P/var/lib/git_project/$pkg_name"
+		cdirl="$(dirname "$(readlink -f "$0")")" # script directory
+		hdir="$HOME/git_project/${PWD##*/}"
+		if [ "$cdirl" != "$gdir" ]; then
+			if [ -e "$gdir" ]; then
+				echo "FATAL: $gdir already exists." >&2
+				exit 1
+			fi
+			mv "$cdirl" "$gdir"
+		fi
+		if [ -e "$hdir" ] ; then
+			hdirl="$(dirname "$(readlink -f "$hdir")")"
+			if [ "$hdirl" != "$gdir" ]; then
+				echo "FATAL: $hdir already exists." >&2
+				exit 1
+			fi
+		else
+			/bin/ln -sf "$gdir" "$hdir"
+			if [ "$(id -u)" -eq 0 ]; then
+				chown $(logname):$(id -gn $(logname)) "$hdir" 2>/dev/null || true
+			fi
+		fi
+	fi
+fi
+	dbv
+
+
+depends(){
+	dbv $@
+	if [ -z "$PROCESS_DEPENDENCIES" ]; then
+		return 0
+	fi
+	local dep_pkg
+	for dep_pkg in "$@"; do
+		dep_pkg_dir="$installed_item/packages/$dep_pkg"
+		dep_pkg_item="$dep_pkg_dir/.__dependeded_by__/$pkg_name"
+		if [ "$INS_OP" = "uninstall" ]; then
+			rm -f "$dep_pkg_item"
+			continue
+		fi
+		if [ ! -e "$dep_pkg_dir" ]; then
+			echo "FATAL: Dependency package, $dep_pkg is not installed. Please install it first." >&2
+			return 1
+		else
+			mkdir -p "$(dirname "$dep_pkg_item")"
+	dbv		/bin/ln -sf "$pkg_dir" "$dep_pkg_item"
+			rm -f "$dep_pkg_item"
+			/bin/ln -sf "$pkg_dir" "$dep_pkg_item"
+		fi
+	done
+}
+
+
+if [ "$INS_OP" = "install" -a "$pkg_name" != "gy_support" ]; then
+	depends "gy_support"
+	if [ $? -ne 0 ]; then
+		exit 1
+	fi
+fi
+
+
+set_prefix(){
+	local item="$1"
+	if [[ "$item" == "/"* ]]; then
+		if [ "$item" = "/usr" -o "$item" = "/usr/local" ]; then
+			item=""
+		fi
+		if [[ "$item" == "/usr/local/"* ]]; then
+			item="${item#/usr/local/}"
+		fi
+		if [[ "$item" == "/usr/"* ]]; then
+			item="${item#/usr/}"
+		fi
+		echo "$P/$item"
+	else
+		echo "$P/bin/$item"
+	fi
+}
+
+prunedir(){
+	local dir="$(dirname "$1")"
+	while [ "$dir" != "$2" -a "$dir" != "/" -a "$dir" != "." ]; do
+		if [ -z "$(ls -A "$dir" 2>/dev/null || echo -n)" -a -e "$dir" ]; then
+			rmdir "$dir"
+			dir="$(dirname "$dir")"
+		else
+			break
+		fi
+	done
+}
+
+
+
+function install(){
+	if [ -n "$PROCESS_DEPENDENCIES" ]; then
+		return 0
+	fi
+	local last="${!#}"
+	if [[ "$last" == "/"* ]]; then
+		set -- "${@:1:$(($#-1))}"
+		target="$(set_prefix "$last")"
+		tshort="$last"
+	else
+		target="$P/bin"
+		tshort="/bin"
+	fi
+	if [ "$INS_OP" = "install" -a ! -e "$pkg_dir/uninstall" ]; then
+		mkdir -p "$pkg_dir"
+		cp  --preserve=timestamp ./install "$pkg_dir/uninstall"
+		echo ". gy_install" > "$pkg_dir/gyi"
+	fi
+
+	for f in "$@"; do
+		dbv $f
+		if [ "$INS_OP" = "install" ]; then
+			echo "Installing $target/$f ..."
+			rm -rf "$target/$f"
+			mkdir -p "$target"
+			if [ -n "$GYINST" ]; then
+				/bin/ln -sf "$P/var/lib/git_project/${PWD##*/}/$f" "$target/$f"
+			else
+				cp -rf --preserve=timestamp "$f" "$target/$f"
+			fi
+			mkdir -p "$(dirname "$file_dir/$tshort/$f")"
+			dbv $file_dir/$tshort/$f
+			if [ ! -e "$file_dir/$tshort/$f" ]; then
+				mkdir -p "$(dirname "$file_dir/$tshort/$f")"
+				/bin/ln -sf "$pkg_dir" "$file_dir/$tshort/$f"
+				mkdir -p "$(dirname "$pkg_dir/$f")"
+				/bin/ln -sf "$target/$f" "$pkg_dir/$f"
+				dbv `ls -la $pkg_dir`
+			else
+				local prev_pkg="$(basename "$(readlink -f "$file_dir/$tshort/$f")")"
+				echo "ERROR: \`$f' from package, \`$prev_pkg' already exists. Please uninstall it first."
+				return 1
+			fi
+		else
+			echo "Uninstalling $target/$f ..."
+			rm -rf "$target/$f"
+			prunedir "$target/$f", $P
+			rm -f "$file_dir/$tshort/$f"
+			prunedir "$file_dir/$tshort/$f", "$file_dir"
+			rm -f "$pkg_dir/$f"
+			prunedir "$pkg_dir/$f", "$pkg_dir"
+		fi
+	done
+}
+
+
+check_uninstall(){
+	rm -f "$pkg_dir/uninstall" "$pkg_dir/gyi"
+	local remaining_files="$(ls -A "$pkg_dir" 2>/dev/null)"
+	if [ "$remaining_files" != "" -a "$remaining_files" != ".__dependeded_by__ gyi" -a "$remaining_files" != "gyi" -a "$remaining_files" != ".__dependeded_by__" ]; then
+		dbv $remaining_files
+		echo "ERROR: Some files are left in package directory $pkg_dir. Please check and remove them manually if necessary." >&2
+	else
+		for f in $pkg_dir/*; do
+			if [ "$f" != ".__dependeded_by__" ]; then
+				rm -rf "$pkg_dir/$f"
+			fi
+		done
+	fi
+}
+
+if [ "$INS_OP" = "uninstall" -a -z "$NOTRAP" ]; then
+	trap 'check_uninstall' EXIT
+fi
+
+
+
+__install_lines_normalize() {
+	sed 's/#[[:space:]]*.*$//;/^[[:space:]]*$/d; s/[[:space:]]\+/ /g; s/^ //; s/ $//'
+}
+
+same(){
+	local f1="$1"
+	local f2="$2"
+	local norm_f1=$(cat "$f1" 2>/dev/null | __install_lines_normalize)
+	local norm_f2=$(cat "$f2" 2>/dev/null | __install_lines_normalize)
+	if [ "$norm_f1" == "$norm_f2" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+	dbv
+
+
+__home_dirs=()
+
+declare -A home_to_users
+
+while IFS=: read -r user _ _ _ _ home _; do
+    if [ -z "$home" ]; then
+        continue
+    fi
+    if [[ "$home" == /home/* || "$home" == /root ]]; then
+        home_to_users["$home"]+="$user "
+    else
+        if [ -f "$home/.bashrc" ]; then
+            home_to_users["$home"]+="$user "
+        fi
+    fi
+done < /etc/passwd
+
+
+__set_home_dirs(){
+	if [ -n "$BASH_VERSION" ]; then
+	# bashの場合
+		mapfile -t __home_dirs < <(awk -F: '{print $6}' /etc/passwd)
+	elif [ -n "$ZSH_VERSION" ]; then
+	# zshの場合
+		__home_dirs=( ${(f)"$(awk -F: '{print $6}' /etc/passwd)"} )
+	fi
+	for i in "${!__home_dirs[@]}"; do
+		if [ "__home_dirs[$i]}" != /root ] && ! [[ "__home_dirs[$i]}" == /home/* ]] && ! [ -f "${__home_dirs[$i]}"/.bashrc ]; then
+			unset '__home_dirs[i]'
+		fi
+	done
+	if [ -n "$BASH_VERSION" ]; then
+		__home_dirs=($(printf "%s\n" "${__home_dirs[@]}" | awk '!a[$0]++'))
+	elif [ -n "$ZSH_VERSION" ]; then
+		__home_dirs=(${(u)__home_dirs})
+	fi
+	__home_dirs+=( "/etc/skel" )
+
+}
+
+if [ "${FOR_ALL_USER}" = "Yes" ]; then
+	__set_home_dirs
+elif [ "${FOR_ALL_USER}" = "No"  ]; then
+	__home_dirs=( "$HOME" )
+fi
+
+__home_dot_files(){
+	local f="$1"
+	home_dot_files=()
+	if ! [[ "$f" == .* ]]; then
+		home_dot_files+=( "$f" )
+	else
+		local hd
+		for hd in "${__home_dirs[@]}"; do
+			home_dot_files+=( "$hd/$f" )
+		done
+	fi
+}
+
+function insert_lines(){
+	if [ -n "$PROCESS_DEPENDENCIES" ]; then
+		return 0
+	fi
+	local target_file
+	local target_files
+	local f
+	local home_dot_files
+	local input="$(
+		awk '
+			/^[[:space:]]*$/ { print ""; next }
+			!found && /^[[:space:]]*[^[:space:]]/ {
+				match($0, /^[[:space:]]*/)
+				min = RLENGTH
+				found = 1
+			}
+			found {
+				match($0, /^[[:space:]]*/)
+				n = RLENGTH < min ? RLENGTH : min
+				print substr($0, n + 1)
+			}
+		'	
+	)"
+	local norm_input=$(printf "%s\n" "$input" | __install_lines_normalize)
+	for f in "$@"; do
+		__home_dot_files "$f"
+		target_files+=( "${home_dot_files[@]}" )
+	done
+	for target_file in "${target_files[@]}"; do
+		if [[ ${target_file##*/} == .* ]]; then
+
+			# 標準入力から全行を読み込む
+			local do_it=""
+			if [ ! -e "$target_file" ]; then
+				do_it=1
+			else
+				# 空行・スペースの個数を無視して正規化
+				
+				local norm_file=$(cat "$target_file" 2>/dev/null | __install_lines_normalize)
+				# ファイルに同じ内容がなければ追加
+				export PAT="$norm_input"
+				if ! perl -0777 -ne 'BEGIN{$pat=$ENV{"PAT"}} exit(index($_, $pat)>=0?0:1)' <<< "$norm_file"; then
+					do_it=1
+				else
+					echo "Skip updating $target_file ..."
+				fi
+			fi
+			if [ -n "$do_it" ]; then
+				echo "Updating $target_file ..."
+				if [ ! -w "$target_file" ]; then
+					printf "%s\n" "$input" | tee -a "$target_file" > /dev/null
+				else
+					printf "%s\n" "$input" >> "$target_file"
+				fi
+			fi
+		fi
+	done
+}
+
+__chown(){
+	local target_file="$1"
+	local u=(${home_to_users["${target_file%/*}"]})
+	if [ -n "${u[0]}" ]; then
+		chown ${u[0]}:$(id -gn ${u[0]}) "$target_file" 2>/dev/null || true
+	fi
+}
+
+__awk(){
+	mv -f "$target_file"{,"._bak"} 2>/dev/null || true
+	export START="$start"
+	export END="$end"
+	export INPUT="$input"
+	awk "$1" "$target_file._bak" > "$target_file"
+	if same "$target_file._bak" "$target_file"; then
+		echo "No changes made to $target_file."
+		mv -f "$target_file._bak" "$target_file" 2>/dev/null || true
+	else
+		echo "Updated $target_file."
+		mv -f "$target_file._bak" "$target_file.bak" 2>/dev/null || true
+		if [ "${target_file%/*}" == "/etc/skel" ]; then
+			mkdir -p /usr/local/etc/skel.bak 2>/dev/null || true
+			mv -f "$target_file".bak /usr/local/etc/skel.bak/ 2>/dev/null || true
+		fi
+		__chown "$target_file"
+		__chown "$target_file".bak
+	fi
+}
+
+ln(){
+	if [ -n "$PROCESS_DEPENDENCIES" ]; then
+		return 0
+	fi
+	pargs=()
+	farg=
+	for i in "$@"; do
+		if [ -z "$farg" ] && [ "${i:0:1}" != "-" ]; then
+			farg="$(set_prefix "$i")"
+		fi
+		if [ "${i:0:1}" != "-" ]; then
+			pargs+=( "$(set_prefix "$i")" )
+		else
+			pargs+=( "$i" )
+		fi
+	done
+	if [ "$INS_OP" = "install" ]; then
+		echo "Installing symlink ${farg} to ${pargs[-1]} ..."
+		dbv /bin/ln "${pargs[@]}"
+		/bin/ln "${pargs[@]}"
+		dbv $?
+	elif [ "$INS_OP" = "uninstall" ]; then
+		echo "Uninstalling symlink ${farg} from ${pargs[-1]} ..."
+		if [ -d "${pargs[-1]}" ]; then
+			command rm -f "${pargs[-1]}/$(basename $farg)"
+		else
+			command rm -f "${pargs[-1]}"
+		fi
+	fi
+}
+
+install_lines(){
+	if [ -n "$PROCESS_DEPENDENCIES" ]; then
+		return 0
+	fi
+	local dname_full="$(dirname "$(readlink -f "$0")")"
+	local dname_short="${dname_full##*/}"
+	local start="# --- Inserted by ${dname_short}/install ---"
+	local end="# --- End of insertion by ${dname_short}/install ---"
+	local target_file
+	local target_files
+	local f
+	local home_dot_files
+	local input="$(
+		awk '
+			/^[[:space:]]*$/ { print ""; next }
+			!found && /^[[:space:]]*[^[:space:]]/ {
+				match($0, /^[[:space:]]*/)
+				min = RLENGTH
+				found = 1
+			}
+			found {
+				match($0, /^[[:space:]]*/)
+				n = RLENGTH < min ? RLENGTH : min
+				print substr($0, n + 1)
+			}
+		' |
+		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])(/usr(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)|/usr/)}{/}g' |
+		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?![ \t;|&(){}\[\]<>,'"'"'":=]|$)}{/'$P'/}g' |
+		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)}{/'$P'}g'
+	)"
+	for f in "$@"; do
+		__home_dot_files "$f"
+		target_files+=( "${home_dot_files[@]}" )
+	done
+	for target_file in "${target_files[@]}"; do
+		if [ "$INS_OP" = "install" ]; then
+			if [ ! -e "$target_file" ] || ! grep "$start" "$target_file" > /dev/null 2>&1; then
+				if [ ! -e "$target_file" ]; then
+					echo "Creating $target_file ..."
+					touch "$target_file"
+					__chown "$target_file"
+				else
+					echo "Inserting the configuration into $target_file ..."
+					cp -f "$target_file"{,".bak"} 2>/dev/null || true
+					__chown "$target_file".bak
+				fi
+				printf "%s" "
+$start
+$input
+$end
+" >> "$target_file"
+				if [ -e "$target_file".bak -a "${target_file%/*}" == "/etc/skel" ]; then
+					if same /usr/local/etc/skel.bak/${target_file##*/}.bak "$target_file".bak; then
+						rm -f "$target_file".bak 2>/dev/null || true
+					else
+						mkdir -p /usr/local/etc/skel.bak 2>/dev/null || true
+						mv -f "$target_file".bak /usr/local/etc/skel.bak/ 2>/dev/null || true
+					fi
+				fi
+			else
+				echo "Updating the configuration on $target_file ..."
+				__awk '
+					BEGIN { inblock=0 }
+					$0 == ENVIRON["START"] { 
+					print ENVIRON["START"]
+					print ENVIRON["INPUT"]
+					inblock=1
+					next
+					}
+					inblock && $0 == ENVIRON["END"] {
+					print ENVIRON["END"]
+					inblock=0
+					next
+					}
+					!inblock
+				'
+			fi
+		elif [ -e "$target_file" ];then
+			echo "Removing the configuration from $target_file ..."
+			__awk '
+				BEGIN { inblock=0 }
+				$0 == ENVIRON["START"] { 
+				inblock=1
+				next
+				}
+				inblock && $0 == ENVIRON["END"] {
+				inblock=0
+				next
+				}
+				!inblock
+			'
+		fi
+	done
+}
+
+dbv $PROCESS_DEPENDENCIES
+	if [ -z "$PROCESS_DEPENDENCIES" ]; then
+		if [ "$INS_OP" = "install" ]; then
+			dbv $relevant starting check dependencies
+			PROCESS_DEPENDENCIES=1 . $relevant
+			dbv $relevant finished check dependencies
+		fi
+
+		if [ "$INS_OP" = "install" -a -e "$pkg_dir/uninstall" ];then # reinstall or update
+			dbv $pkg_dir/uninstall
+			NOTRAP=1 INS_OP=uninstall . $pkg_dir/uninstall
+			check_uninstall
+		fi
+
+		. $relevant
+
+		if [ "$INS_OP" = "uninstall" ]; then
+			PROCESS_DEPENDENCIES=1 . $relevant
+		fi
+		exit
+	fi
+fi
+dbv $0 $* finished
