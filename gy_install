@@ -1,7 +1,13 @@
 #!/bin/bash
 
 
-. bashlib_y
+if [ -x "`which bashlib_y 2>/dev/null`" ]; then
+	. bashlib_y
+else
+	dbv(){
+		:
+	}
+fi
 
 set -e
 dbv $REENTER
