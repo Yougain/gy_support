@@ -1,12 +1,15 @@
 #!/bin/bash
 
 
-if [ -x "`which bashlib_y 2>/dev/null`" ]; then
-	. bashlib_y
-else
-	dbv(){
-		:
-	}
+if ! declare -f emerge_file_content > /dev/null; then
+	if [ -e $(dirname $0)/dbv.bash ]; then
+		. $(dirname $0)/dbv.bash
+	fi
+	if ! declare -f emerge_file_content > /dev/null; then
+		dbv(){
+			:
+		}
+	fi
 fi
 
 set -e
@@ -635,6 +638,10 @@ ln(){
 	fi
 }
 
+
+declare -A install_order
+
+
 install_lines(){
 	if [ -n "$PROCESS_DEPENDENCIES" ]; then
 		return 0
@@ -670,6 +677,12 @@ install_lines(){
 		target_files+=( "${home_dot_files[@]}" )
 	done
 	for target_file in "${target_files[@]}"; do
+		if [ -z "${install_order["$target_file"]}" ]; then
+			install_order["$target_file"]=0
+		fi
+		install_order["$target_file"]=$((install_order["$target_file"]+1))
+		start="# --- Inserted by ${dname_short}/install (${install_order["$target_file"]}) ---"
+		end="# --- End of insertion by ${dname_short}/install (${install_order["$target_file"]}) ---"
 		if [ "$INS_OP" = "install" ]; then
 			if [ ! -e "$target_file" ] || ! grep "$start" "$target_file" > /dev/null 2>&1; then
 				if [ ! -e "$target_file" ]; then

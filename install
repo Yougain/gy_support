@@ -29,7 +29,24 @@ install_lines .zshrc .bashrc <<END
     unset i
 END
 
+install_lines .bashrc <<END
+    for i in /etc/bashrc.d/*.sh; do
+        if [ "\$i" = "/etc/bashrc.d/*.sh" ]; then
+            break
+        fi
+        if [ -r "\$i" ]; then
+            . "\$i"
+        fi
+    done
+    unset i
+END
+
 
 install %wsl.sh %local_path.sh /etc/shrc.d
+install dbv.bash /lib/gy_support
+
+install_lines /etc/bashrc.d/%dbv.bash <<END
+    export BASH_ENV=/lib/gy_support/dbv.bash
+END
 
 
