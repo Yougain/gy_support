@@ -506,11 +506,30 @@ elif [ "${FOR_ALL_USER}" = "No"  ]; then
 	__home_dirs=( "$HOME" )
 fi
 
+__pass_err(){
+	echo "FATAL: Invalid file path: $f. Only absolute paths are allowed."
+	exit 1
+}
+
 __home_dot_files(){
 	local f="$1"
 	home_dot_files=()
 	if ! [[ "$f" == .* ]]; then
-		home_dot_files+=( "$f" )
+		if [ -z "$keep_path" ]; then
+			if [[ "$f" == /usr/* ]]; then
+				home_dot_files+=( "$P${f#/usr}" )
+			elif [[ "$f" == /* ]]; then
+				home_dot_files+=( "$P$f" )
+			else
+				__pass_err
+			fi
+		else
+			if [[ "$f" == /* ]]; then
+				home_dot_files+=( "$P$f" )
+			else
+				__pass_err
+			fi
+		fi
 	else
 		local hd
 		for hd in "${__home_dirs[@]}"; do
@@ -643,6 +662,11 @@ declare -A install_order
 
 
 install_lines(){
+	local keep_path=
+	if [ "$1" = "--keep-path" ]; then
+		keep_path=1
+		shift
+	fi
 	if [ -n "$PROCESS_DEPENDENCIES" ]; then
 		return 0
 	fi
@@ -667,11 +691,15 @@ install_lines(){
 				n = RLENGTH < min ? RLENGTH : min
 				print substr($0, n + 1)
 			}
-		' |
-		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])(/usr(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)|/usr/)}{/}g' |
-		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?![ \t;|&(){}\[\]<>,'"'"'":=]|$)}{/'$P'/}g' |
-		perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)}{/'$P'}g'
+		'
 	)"
+	if [ -z "$keep_path" ]; then
+		input="$(
+			( perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])(/usr(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)|/usr/)}{/}g' |
+			  perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?![ \t;|&(){}\[\]<>,'"'"'":=]|$)}{'$P'/}g' |
+			  perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)}{'$P'}g' ) <<< "$input"
+		)"
+	fi
 	for f in "$@"; do
 		__home_dot_files "$f"
 		target_files+=( "${home_dot_files[@]}" )
@@ -680,13 +708,18 @@ install_lines(){
 		if [ -z "${install_order["$target_file"]}" ]; then
 			install_order["$target_file"]=0
 		fi
+		dbv ${install_order["$target_file"]}
+		dbv $target_file
 		install_order["$target_file"]=$((install_order["$target_file"]+1))
+		dbv ${install_order["$target_file"]}
+		dbv $target_file
 		start="# --- Inserted by ${dname_short}/install (${install_order["$target_file"]}) ---"
 		end="# --- End of insertion by ${dname_short}/install (${install_order["$target_file"]}) ---"
 		if [ "$INS_OP" = "install" ]; then
 			if [ ! -e "$target_file" ] || ! grep "$start" "$target_file" > /dev/null 2>&1; then
 				if [ ! -e "$target_file" ]; then
 					echo "Creating $target_file ..."
+					mkdir -p "$(dirname "$target_file")"
 					touch "$target_file"
 					__chown "$target_file"
 				else
@@ -747,19 +780,23 @@ dbv $PROCESS_DEPENDENCIES
 	if [ -z "$PROCESS_DEPENDENCIES" ]; then
 		if [ "$INS_OP" = "install" ]; then
 			dbv $relevant starting check dependencies
+			install_order=()
 			PROCESS_DEPENDENCIES=1 . $relevant
 			dbv $relevant finished check dependencies
 		fi
 
 		if [ "$INS_OP" = "install" -a -e "$pkg_dir/uninstall" ];then # reinstall or update
 			dbv $pkg_dir/uninstall
+			install_order=()
 			NOTRAP=1 INS_OP=uninstall . $pkg_dir/uninstall
 			check_uninstall
 		fi
 
+		install_order=()
 		. $relevant
 
 		if [ "$INS_OP" = "uninstall" ]; then
+			install_order=()
 			PROCESS_DEPENDENCIES=1 . $relevant
 		fi
 		exit

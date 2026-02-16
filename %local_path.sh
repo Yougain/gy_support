@@ -4,7 +4,6 @@ add_path_once() {
 
     case ":$PATH:" in
         *":$dir:"*)
-            echo found
             ;;              # 既に含まれている
         *) PATH="$PATH:$dir"
             ;;     # 未登録なら追加（末尾）
