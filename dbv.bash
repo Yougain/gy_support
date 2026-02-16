@@ -1,3 +1,15 @@
+print_call_stack() {
+  local i
+  for ((i=0; i<${#FUNCNAME[@]}-1; i++)); do
+    printf '#%d %s at %s:%s\n' \
+      "$i" \
+      "${FUNCNAME[$i+1]}" \
+      "${BASH_SOURCE[$i+1]}" \
+      "${BASH_LINENO[$i]}"
+  done
+}
+
+
 dbv(){
 	if [ -n "$DEBUG" ];then
         if ! declare -f emerge_file_content > /dev/null; then
