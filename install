@@ -17,6 +17,15 @@ cd $(dirname $0)
 install gy_install
 ln -s gy_install gy_uninstall
 
+install_lines .zshrc <<END
+    setopt NONOMATCH
+END
+
+
+install_lines .bashrc <<END
+    shopt -s nullglob
+END
+
 install_lines .zshrc .bashrc <<END
     export YK_PREFIX=\$(dirname /lib)
     for i in \$(print -rl -- /etc/shrc.d/*.sh | LC_ALL=C sort); do
@@ -26,7 +35,7 @@ install_lines .zshrc .bashrc <<END
         if [ -r "\$i" ]; then
             . "\$i"
         fi
-    done 2>/dev/null || true
+    done
     unset i
 END
 
@@ -39,7 +48,7 @@ install_lines .bashrc <<END
         if [ -r "\$i" ]; then
             . "\$i"
         fi
-    done 2>/dev/null || true
+    done
     unset i
 END
 
@@ -52,9 +61,10 @@ install_lines .zshrc <<END
         if [ -r "\$i" ]; then
             . "\$i"
         fi
-    done 2>/dev/null || true
+    done
     unset i
 END
+
 
 
 install %wsl.sh %local_path.sh /etc/shrc.d
@@ -64,4 +74,12 @@ install_lines /etc/shrc.d/%dbv.sh <<END
     export BASH_ENV=/lib/gy_support/dbv.bash
 END
 
+
+install_lines .zshrc <<END
+    setopt NOMATCH
+END
+
+install_lines .bashrc <<END
+    shopt -s failglob
+END
 

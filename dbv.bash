@@ -67,7 +67,7 @@ dbv(){
 	if [ -n "$DEBUG" ];then
 		local position
 		local caption
-		if [ "$1" = "--position" ];then
+		if [ "$1" = "--position" -a -n "$BASH_VERSION" ];then
 			shift
 			position="$1"
 			shift
@@ -83,9 +83,17 @@ dbv(){
 			fi
 		else
 			local IFS=" "
-			local frame=(`caller 0`)
-			local f="`readlink -f ${frame[2]}`"
-			local lno="${frame[0]}"
+			if [ -n "$BASH_VERSION" ]; then
+				local frame=(`caller 0`)
+				local f="`readlink -f ${frame[2]}`"
+				local lno="${frame[0]}"
+			elif [ -n "$ZSH_VERSION" ]; then
+				local f="${funcfiletrace[0]%:*}"
+				local lno="${funcfiletrace[0]##*:}"
+			else
+				err "Unsupported shell for dbv function." >&2
+				return 1
+			fi
 			local ln
 			local sid
 			if [ -n "$SSH_ID" ];then
