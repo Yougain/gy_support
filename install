@@ -18,26 +18,41 @@ install gy_install
 ln -s gy_install gy_uninstall
 
 install_lines .zshrc .bashrc <<END
-    for i in /etc/shrc.d/*.sh; do
+    export YK_PREFIX=\$(dirname /lib)
+    for i in \$(print -rl -- /etc/shrc.d/*.sh | LC_ALL=C sort); do
         if [ "\$i" = "/etc/shrc.d/*.sh" ]; then
             break
         fi
         if [ -r "\$i" ]; then
             . "\$i"
         fi
-    done
+    done 2>/dev/null || true
     unset i
 END
 
+
 install_lines .bashrc <<END
-    for i in /etc/bashrc.d/*.sh; do
-        if [ "\$i" = "/etc/bashrc.d/*.sh" ]; then
+    for i in \$(print -rl -- /etc/bashrc.d/*.bash | LC_ALL=C sort); do
+        if [ "\$i" = "/etc/bashrc.d/*.bash" ]; then
             break
         fi
         if [ -r "\$i" ]; then
             . "\$i"
         fi
-    done
+    done 2>/dev/null || true
+    unset i
+END
+
+
+install_lines .zshrc <<END
+    for i in \$(print -rl -- /etc/zshrc.d/*.zsh | LC_ALL=C sort); do
+        if [ "\$i" = "/etc/zshrc.d/*.zsh" ]; then
+            break
+        fi
+        if [ -r "\$i" ]; then
+            . "\$i"
+        fi
+    done 2>/dev/null || true
     unset i
 END
 
@@ -45,7 +60,7 @@ END
 install %wsl.sh %local_path.sh /etc/shrc.d
 install dbv.bash /lib/gy_support
 
-install_lines /etc/bashrc.d/%dbv.bash <<END
+install_lines /etc/shrc.d/%dbv.sh <<END
     export BASH_ENV=/lib/gy_support/dbv.bash
 END
 
