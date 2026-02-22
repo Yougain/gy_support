@@ -68,7 +68,6 @@ END
 
 
 install %wsl.sh %local_path.sh /etc/shrc.d
-install %
 install dbv.bash /lib/gy_support
 install %%dbv.zsh /etc/zshrc.d
 
