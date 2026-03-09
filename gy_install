@@ -306,6 +306,13 @@ depends(){
 	fi
 	local dep_pkg
 	for dep_pkg in "$@"; do
+		if [[ "$dep_pkg" == "/"* ]]; then
+			if [ ! -e "$dep_pkg" ]; then
+				echo "FATAL: Dependency file, $dep_pkg not found." >&2
+				return 1
+			fi
+			continue
+		fi
 		dep_pkg_dir="$installed_item/packages/$dep_pkg"
 		dep_pkg_item="$dep_pkg_dir/.__dependeded_by__/$pkg_name"
 		if [ "$INS_OP" = "uninstall" ]; then
