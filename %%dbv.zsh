@@ -44,8 +44,10 @@ source_depth() {
 	print -r -- "$depth"
 }
 
+autoload -Uz add-zsh-hook
 
-preexec() {
+add-zsh-hook preexec dbv_preexec
+dbv_preexec() {
 	if [ "$1" = "." -o "$1" = "source" ]; then
 		this_cmd="$1 $2"
 	else
