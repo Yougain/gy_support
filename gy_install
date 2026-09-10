@@ -702,10 +702,10 @@ install_lines(){
 	)"
 	if [ -z "$keep_path" ]; then
 		input="$(
-			( perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])(/usr(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)|/usr/)}{/}g' |
+			( perl -Mwarnings=-experimental::vlb -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])(/usr(?=[ \t;|&(){}\[\]<>,'"'"'":=]|$)|/usr/)}{/}g' |
 			#  perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?![ \t;|&(){}\[\]<>,'"'"'":=]|$)}{'$P'/}g' |
-			  perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=bin/|lib/|var/|etc/)}{'$P'/}g' |
-			  perl -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=(bin|lib|var|etc)[ \t;|&(){}\[\]<>,'"'"'":=]|$)}{'$P/'}g' ) <<< "$input"
+			  perl -Mwarnings=-experimental::vlb -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=bin/|lib/|var/|etc/)}{'$P'/}g' |
+			  perl -Mwarnings=-experimental::vlb -pe 's{(?<=^|[ \t;|&(){}\[\]<>,'"'"'":=])/(?=(bin|lib|var|etc)[ \t;|&(){}\[\]<>,'"'"'":=]|$)}{'$P/'}g' ) <<< "$input"
 		)"
 	fi
 	for f in "$@"; do

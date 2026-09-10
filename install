@@ -30,9 +30,10 @@ install_lines .bashrc <<END
     shopt -s nullglob
 END
 
-install_lines .zshrc .bashrc <<END
+
+install_lines .bashrc <<END
     export YK_PREFIX=\$(dirname /lib)
-    for i in \$(print -rl -- /etc/shrc.d/*.sh | LC_ALL=C sort); do
+    for i in \$(printf '%s\n' /etc/shrc.d/*.sh | LC_ALL=C sort); do
         if [ "\$i" = "/etc/shrc.d/*.sh" ]; then
             break
         fi
@@ -41,11 +42,7 @@ install_lines .zshrc .bashrc <<END
         fi
     done
     unset i
-END
-
-
-install_lines .bashrc <<END
-    for i in \$(print -rl -- /etc/bashrc.d/*.bash | LC_ALL=C sort); do
+    for i in \$(printf '%s\n' /etc/bashrc.d/*.bash | LC_ALL=C sort); do
         if [ "\$i" = "/etc/bashrc.d/*.bash" ]; then
             break
         fi
@@ -58,6 +55,16 @@ END
 
 
 install_lines .zshrc <<END
+    export YK_PREFIX=\$(dirname /lib)
+    for i in \$(print -rl -- /etc/shrc.d/*.sh | LC_ALL=C sort); do
+        if [ "\$i" = "/etc/shrc.d/*.sh" ]; then
+            break
+        fi
+        if [ -r "\$i" ]; then
+            . "\$i"
+        fi
+    done
+    unset i
     for i in \$(print -rl -- /etc/zshrc.d/*.zsh | LC_ALL=C sort); do
         if [ "\$i" = "/etc/zshrc.d/*.zsh" ]; then
             break
