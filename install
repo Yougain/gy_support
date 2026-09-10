@@ -18,7 +18,7 @@ cd $script_dir
 
 #sudo $IST install -y sudo git
 
-install gy_install
+install gy_install gyinst
 ln -s gy_install gy_uninstall
 
 install_lines .zshrc <<END
