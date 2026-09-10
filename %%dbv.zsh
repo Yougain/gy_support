@@ -46,15 +46,18 @@ source_depth() {
 
 autoload -Uz add-zsh-hook
 
-add-zsh-hook preexec dbv_preexec
 dbv_preexec() {
 	if [ "$1" = "." -o "$1" = "source" ]; then
 		this_cmd="$1 $2"
+		this_cmd_name=$(basename -- "$2")
 	else
 		this_cmd="$1"
+		this_cmd_name=$(basename -- "$1")
 	fi
 }
 
+
+add-zsh-hook preexec dbv_preexec
 
 deb(){
 	if [ -n "$DEBUG" ];then
@@ -65,7 +68,13 @@ deb(){
 			else
 			    if [ -z "$VIEWER_FD" ]; then
 					mkdir -p /tmp/log
-			        exec {VIEWER_FD}>> "/tmp/log/$(basename $0).log"
+					local cmd_name=
+					if [ -n "$this_cmd_name" ]; then
+						cmd_name=$this_cmd_name
+					else
+						cmd_name=$(basename -- "$0")
+					fi
+			        exec {VIEWER_FD}>> "/tmp/log/$cmd_name.log"
     			fi
 			    w=$VIEWER_FD				
 			fi
@@ -102,7 +111,7 @@ dbv(){
             ln="$(printf '%s' "$ln" | sed 's/[[:space:]]*$//')"
             if [[ "$ln" == *'`'* || "$ln" == *'$'* || "$ln" == *'(('* ]] ;then
                 ln="$(printf '%s' "$ln" | sed 's/[[:space:]]*$//')"
-                deb ${f##*/}:$rlno ${fg[yellow]}${ln#*dbv }${fg[green]} = "'"${fg[cyan]}"$@"${fg[green]}"'"$plain
+                deb ${f##*/}:$rlno ${fg[yellow]}"'"${ln#*dbv }"'"${fg[green]} = "'"${fg[cyan]}"$@"${fg[green]}"'"$plain
             else
                 deb ${f##*/}:$rlno ${fg[cyan]}$@$plain
             fi

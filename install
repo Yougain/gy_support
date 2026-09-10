@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-
+pwd
 . ./gy_install $0
 
 #sudo $IST update -y
