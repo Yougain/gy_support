@@ -235,6 +235,7 @@ fi
 if [ "$INS_OP" = "install" ]; then
 
 	__gy_select_installation(){
+		show_stack
 		echo -n "For local user or all users? Please select [1) local user, 2) all users]: "
 		read ans
 		if [ "$ans" = "1" ]; then
@@ -264,7 +265,6 @@ if [ "$INS_OP" = "install" ]; then
 	fi
 
 	if [ "$FOR_ALL_USER" = "Yes" ] && [ "$(id -u)" -ne 0 ]; then
-		echo exec sudo bash -c "PATH=/usr/local/bin:\$PATH ./$INS_OP"
 		exec sudo bash -c "PATH=/usr/local/bin:\$PATH ./$INS_OP"
 	fi
 
