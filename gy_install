@@ -151,7 +151,7 @@ dbv $0 $*
 
 cd "$(dirname "$relevant")"
 
-if [ "$(dirname $(pwd))" != "$HOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
+if [ "$(dirname $(pwd))" != "$SUDO_USER/.local/downloads/yk_packages" -a "$(dirname $(pwd))" != "$HOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
 	_pwd="$(pwd)"
 	cd "$(dirname $(pwd))"
 	mkdir -p "$HOME/.local/downloads/yk_packages"
