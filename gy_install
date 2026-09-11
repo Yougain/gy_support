@@ -2,8 +2,10 @@
 
 if [ -n "$SUDO_USER" ];then
 	SHOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+	SUSER="$SUDO_USER"
 else
 	SHOME="$HOME"
+	SUSER="$USER"
 fi
 
 
@@ -124,14 +126,19 @@ case "$(basename $0)" in
 		else
 			for i in "$@"; do
 				if [ -e ~/git_project/$i ]; then
-					~/git_project/$i/install
+					(
+						cd ~/git_project/$i
+						./install
+					)
 				else
-					id
-					mkdir -p $SHOME/.local/downloads/yk_packages/$i
+					sudo -u $SUSER mkdir -p $SHOME/.local/downloads/yk_packages/$i
 					echo git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
-					git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
+					sudo -u $SUSER git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
 					echo $SHOME/.local/downloads/yk_packages/$i/install
-					$SHOME/.local/downloads/yk_packages/$i/install
+					(
+						cd $SHOME/.local/downloads/yk_packages/$i
+						./install
+					)
 				fi
 			done
 		fi
