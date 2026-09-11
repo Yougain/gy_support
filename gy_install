@@ -118,6 +118,7 @@ case "$(basename $0)" in
 	gy_install)
 		if [ $# -eq 0 ]; then
 			if [ -e ./install ]; then
+				echo execiting ./install
 				exec ./install
 			else
 				echo "FATAL: install script not found." >&2
