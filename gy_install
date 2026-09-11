@@ -1,6 +1,9 @@
 #!/bin/bash
 
+script_args=("$@")
+
 show_stack() {
+	echo "${script_args[@]}"
 	pwd
 	echo $$
     local i
