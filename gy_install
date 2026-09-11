@@ -1,6 +1,7 @@
 #!/bin/bash
 
 show_stack() {
+	pwd
     local i
     for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
         printf '#%d %s() at %s:%s\n' \
