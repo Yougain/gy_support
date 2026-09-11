@@ -156,7 +156,7 @@ if [ "$(dirname $(pwd))" != "$HOME/.local/downloads/yk_packages" -a "$(basename 
 	cd "$(dirname $(pwd))"
 	mkdir -p "$HOME/.local/downloads/yk_packages"
 	mv "$_pwd" "$HOME/.local/downloads/yk_packages"
-	ln -sf "$HOME/.local/downloads/yk_packages/$(basebame $_pwd)"
+	ln -sf "$HOME/.local/downloads/yk_packages/$(basename $_pwd)"
 	cd "$_pwd"
 fi
 
