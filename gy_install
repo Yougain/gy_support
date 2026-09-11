@@ -12,7 +12,7 @@ if [ "$SHOME" = "/root" ];then
 	id
 	set
 	exit 1
-end
+fi
 
 
 if ! declare -f emerge_file_content > /dev/null; then
