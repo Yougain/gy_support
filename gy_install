@@ -134,13 +134,25 @@ case "$(basename $0)" in
 					sudo -u $SUSER mkdir -p $SHOME/.local/downloads/yk_packages/$i
 					echo git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
 					sudo -u $SUSER git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
-					echo $SHOME/.local/downloads/yk_packages/$i/install
+					echo ***$SHOME/.local/downloads/yk_packages/$i/install***
 					(
+						echo 1
 						cd $SHOME/.local/downloads/yk_packages/$i
+						echo 2
+						pwd
+						echo 3
+						echo ./install
+						echo 4
 						./install
+						echo 5
+						echo finished ./install
+						echo 6
 					)
+					echo 7
 				fi
+				echo 8
 			done
+			echo 9
 		fi
 		exit
 		;;
