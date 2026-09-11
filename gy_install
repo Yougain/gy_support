@@ -246,7 +246,7 @@ if [ "$INS_OP" = "install" ]; then
 
 	__gy_select_installation(){
 		#show_stack
-		echo -n "For local user or all users? Please select [1) local user, 2) all users]: "
+		echo -en "\033[36mFor local user or all users? Please select [1. local user, 2. all users]\033[0m: "
 		read ans
 		if [ "$ans" = "1" ]; then
 			export FOR_ALL_USER=No
