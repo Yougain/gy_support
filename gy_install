@@ -198,7 +198,6 @@ cd "$(dirname "$relevant")"
 
 
 if [ "$(dirname $(pwd))" != "$SHOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
-	echo _pwd="$(pwd)"
 	_pwd="$(pwd)"
 	cd "$(dirname $(pwd))"
 	mkdir -p "$SHOME/.local/downloads/yk_packages"
