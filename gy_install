@@ -1,5 +1,17 @@
 #!/bin/bash
 
+show_stack() {
+    local i
+    for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
+        printf '#%d %s() at %s:%s\n' \
+            "$i" \
+            "${FUNCNAME[$i]:-main}" \
+            "${BASH_SOURCE[$i]:-}" \
+            "${BASH_LINENO[$i - 1]:-0}"
+    done
+}
+
+
 if [ -n "$SUDO_USER" ];then
 	SHOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
 	SUSER="$SUDO_USER"
