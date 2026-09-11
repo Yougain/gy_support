@@ -127,7 +127,9 @@ case "$(basename $0)" in
 					~/git_project/$i/install
 				else
 					mkdir -p $SHOME/.local/downloads/yk_packages
+					echo git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages
 					git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages
+					echo $SHOME/.local/downloads/yk_packages/$i/install
 					$SHOME/.local/downloads/yk_packages/$i/install
 				fi
 			done
