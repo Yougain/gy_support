@@ -112,9 +112,9 @@ case "$(basename $0)" in
 				if [ -e ~/git_project/$i ]; then
 					~/git_project/$i/install
 				else
-					mkdir -p .local/tmp/downloads
-					git clone https://github.com/Yougain/$i.git .local/tmp/downloads
-					.local/tmp/downloads/$i/install
+					mkdir -p $HOME/.local/downloads/yk_packages
+					git clone https://github.com/Yougain/$i.git $HOME/.local/downloads/yk_packages
+					$HOME/.local/downloads/yk_packages/$i/install
 				fi
 			done
 		fi
@@ -150,6 +150,15 @@ dbv $relevant
 dbv $0 $*
 
 cd "$(dirname "$relevant")"
+
+if [ "$(dirname $(pwd))" != "$HOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
+	_pwd="$(pwd)"
+	cd "$(dirname $(pwd))"
+	mkdir -p "$HOME/.local/downloads/yk_packages"
+	mv "$_pwd" "$HOME/.local/downloads/yk_packages"
+	ln -sf "$HOME/.local/downloads/yk_packages/$(basebame $_pwd)"
+	cd "$_pwd"
+fi
 
 
 case "$(basename "$relevant")" in
