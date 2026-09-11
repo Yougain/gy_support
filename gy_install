@@ -276,7 +276,7 @@ if [ "$INS_OP" = "install" ]; then
 	fi
 
 	if [ "$FOR_ALL_USER" = "Yes" ] && [ "$(id -u)" -ne 0 ]; then
-		exec sudo bash -c "PATH=/usr/local/bin:\$PATH ./$INS_OP"
+		exec sudo bash -c "FOR_ALL_USER=Yes PATH=/usr/local/bin:\$PATH ./$INS_OP"
 	fi
 
 fi
