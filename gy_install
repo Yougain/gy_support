@@ -5,7 +5,7 @@ script_args=("$@")
 show_stack() {
 	echo "${script_args[@]}"
 	pwd
-	echo $$
+	echo $$ $PPID
     local i
     for ((i = 0; i < ${#FUNCNAME[@]}; i++)); do
         printf '#%d %s() at %s:%s\n' \
