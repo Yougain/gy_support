@@ -1,5 +1,19 @@
 #!/bin/bash
 
+if [ -n "$SUDO_USER" ];then
+	SHOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+	SHOME="$HOME"
+fi
+
+
+if [ "$SHOME" = "/root" ];then
+	echo "SHOME = /root is not allowed"
+	id
+	set
+	exit 1
+end
+
 
 if ! declare -f emerge_file_content > /dev/null; then
 	if [ -e $(dirname $0)/dbv.bash ]; then
@@ -82,7 +96,7 @@ fi
 dbv
 
 uninstall(){ # uninstall PACKAGE_NAME
-	for d in "$R/local" "$HOME/.local" "/usr/local"; do
+	for d in "$R/local" "$SHOME/.local" "/usr/local"; do
 		uninstaller="$d/var/lib/gy_support/installed/packages/$1/uninstall"
 		if [ -e "$uninstaller" ]; then
 			if [ "$d" = "/usr/local" ]; then
@@ -112,9 +126,9 @@ case "$(basename $0)" in
 				if [ -e ~/git_project/$i ]; then
 					~/git_project/$i/install
 				else
-					mkdir -p $HOME/.local/downloads/yk_packages
-					git clone https://github.com/Yougain/$i.git $HOME/.local/downloads/yk_packages
-					$HOME/.local/downloads/yk_packages/$i/install
+					mkdir -p $SHOME/.local/downloads/yk_packages
+					git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages
+					$SHOME/.local/downloads/yk_packages/$i/install
 				fi
 			done
 		fi
@@ -151,12 +165,13 @@ dbv $0 $*
 
 cd "$(dirname "$relevant")"
 
-if [ "$(dirname $(pwd))" != "$SUDO_USER/.local/downloads/yk_packages" -a "$(dirname $(pwd))" != "$HOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
+
+if [ $(dirname $(pwd))" != "$shome/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
 	_pwd="$(pwd)"
 	cd "$(dirname $(pwd))"
-	mkdir -p "$HOME/.local/downloads/yk_packages"
-	mv "$_pwd" "$HOME/.local/downloads/yk_packages"
-	ln -sf "$HOME/.local/downloads/yk_packages/$(basename $_pwd)"
+	mkdir -p "$SHOME/.local/downloads/yk_packages"
+	mv "$_pwd" "$SHOME/.local/downloads/yk_packages"
+	ln -sf "$SHOME/.local/downloads/yk_packages/$(basename $_pwd)"
 	cd "$_pwd"
 fi
 
@@ -237,7 +252,7 @@ if [ -z "$R" ]; then
 	if [ "$FOR_ALL_USER" = "Yes" ]; then
 		P="/usr/local"
 	else
-		P="$HOME/.local"
+		P="$SHOME/.local"
 	fi
 else
 	P="$R/local"
@@ -283,7 +298,7 @@ else
 	if [ -n "$GYINST" ]; then
 		gdir="$P/var/lib/git_project/$pkg_name"
 		cdirl="$(dirname "$(readlink -f "$0")")" # script directory
-		hdir="$HOME/git_project/${PWD##*/}"
+		hdir="$SHOME/git_project/${PWD##*/}"
 		if [ "$cdirl" != "$gdir" ]; then
 			if [ -e "$gdir" ]; then
 				echo "FATAL: $gdir already exists." >&2
@@ -527,7 +542,7 @@ __set_home_dirs(){
 if [ "${FOR_ALL_USER}" = "Yes" ]; then
 	__set_home_dirs
 elif [ "${FOR_ALL_USER}" = "No"  ]; then
-	__home_dirs=( "$HOME" )
+	__home_dirs=( "$SHOME" )
 fi
 
 __pass_err(){
