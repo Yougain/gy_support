@@ -246,7 +246,7 @@ fi
 if [ "$INS_OP" = "install" ]; then
 
 	__gy_select_installation(){
-		show_stack
+		#show_stack
 		echo -n "For local user or all users? Please select [1) local user, 2) all users]: "
 		read ans
 		if [ "$ans" = "1" ]; then
