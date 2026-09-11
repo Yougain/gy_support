@@ -167,11 +167,18 @@ cd "$(dirname "$relevant")"
 
 
 if [ "$(dirname $(pwd))" != "$SHOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
+	echo _pwd="$(pwd)"
 	_pwd="$(pwd)"
+	echo cd "$(dirname $(pwd))"
 	cd "$(dirname $(pwd))"
+	echo mkdir -p "$SHOME/.local/downloads/yk_packages"
 	mkdir -p "$SHOME/.local/downloads/yk_packages"
+	echo mv "$_pwd" "$SHOME/.local/downloads/yk_packages"
 	mv "$_pwd" "$SHOME/.local/downloads/yk_packages"
+	echo 100
+	echo ln -sf "$SHOME/.local/downloads/yk_packages/$(basename $_pwd)"
 	ln -sf "$SHOME/.local/downloads/yk_packages/$(basename $_pwd)"
+	echo 101
 	cd "$_pwd"
 fi
 
