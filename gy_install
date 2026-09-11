@@ -126,9 +126,10 @@ case "$(basename $0)" in
 				if [ -e ~/git_project/$i ]; then
 					~/git_project/$i/install
 				else
-					mkdir -p $SHOME/.local/downloads/yk_packages
-					echo git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages
-					git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages
+					id
+					mkdir -p $SHOME/.local/downloads/yk_packages/$i
+					echo git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
+					git clone https://github.com/Yougain/$i.git $SHOME/.local/downloads/yk_packages/$i
 					echo $SHOME/.local/downloads/yk_packages/$i/install
 					$SHOME/.local/downloads/yk_packages/$i/install
 				fi
@@ -171,16 +172,10 @@ cd "$(dirname "$relevant")"
 if [ "$(dirname $(pwd))" != "$SHOME/.local/downloads/yk_packages" -a "$(basename $(dirname $(pwd)))" != git_project ]; then
 	echo _pwd="$(pwd)"
 	_pwd="$(pwd)"
-	echo cd "$(dirname $(pwd))"
 	cd "$(dirname $(pwd))"
-	echo mkdir -p "$SHOME/.local/downloads/yk_packages"
 	mkdir -p "$SHOME/.local/downloads/yk_packages"
-	echo mv "$_pwd" "$SHOME/.local/downloads/yk_packages"
 	mv "$_pwd" "$SHOME/.local/downloads/yk_packages"
-	echo 100
-	echo ln -sf "$SHOME/.local/downloads/yk_packages/$(basename $_pwd)"
 	ln -sf "$SHOME/.local/downloads/yk_packages/$(basename $_pwd)"
-	echo 101
 	cd "$_pwd"
 fi
 
