@@ -23,8 +23,6 @@ fi
 
 if [ "$SHOME" = "/root" ];then
 	echo "SHOME = /root is not allowed"
-	id
-	set
 	exit 1
 fi
 
@@ -383,17 +381,10 @@ depends(){
 
 
 		if [ ! -e "$dep_pkg_dir" ]; then
-			#local script_path="${BASH_SOURCE[0]}"
-			#local script_name="$(basename -- "$script_path")"
-			#local script_dir="$(cd -- "$(dirname -- "$script_path")" && pwd)"
-			#local od=$(pwd)
-			#cd $script_dir
 			if ! gy_install $dep_pkg; then
-			#	cd $od
 				echo "FATAL: Dependency package, $dep_pkg is not installed. Please install it first." >&2
 				return 1
 			fi
-			#cd $od
 		fi
 		mkdir -p "$(dirname "$dep_pkg_item")"
 	dbv		/bin/ln -sf "$pkg_dir" "$dep_pkg_item"
