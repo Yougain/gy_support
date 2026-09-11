@@ -112,9 +112,9 @@ case "$(basename $0)" in
 				if [ -e ~/git_project/$i ]; then
 					~/git_project/$i/install
 				else
-					mkdir -p .tmp/downloads
-					git clone https://github.com/Yougain/$i.git .tmp/downloads
-					./tmp/downloads/$i/install
+					mkdir -p .local/tmp/downloads
+					git clone https://github.com/Yougain/$i.git .local/tmp/downloads
+					.local/tmp/downloads/$i/install
 				fi
 			done
 		fi
